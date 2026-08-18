@@ -20,6 +20,14 @@ docker compose up --build -d --scale crawler=2
 
 Keep `VITE_API_BASE_URL` empty locally so the browser calls `/api` on the same origin.
 
+A crawler that hits HTTP 429 **stops the whole fleet** (containers stay up, but they do not fetch). Logs will say `Rate limited`. Resume after a cooldown:
+
+```sql
+UPDATE crawler_control SET paused = false, reason = NULL, paused_at = NULL, updated_at = NOW() WHERE id = 1;
+```
+
+Crawlers notice within about a minute. 404s and login walls still skip that one profile only.
+
 ## Production
 
 Domains:

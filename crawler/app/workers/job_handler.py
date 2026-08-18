@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.collectors.base import CollectionBlockedError, CreatorSnapshot
+from app.collectors.base import CollectionBlockedError, CreatorSnapshot, RateLimitedError
 from app.collectors.factory import get_collector
 from app.config.logging import logger
 from app.config.settings import (
@@ -95,6 +95,11 @@ def handle_discover(message: dict) -> list[dict]:
         if not followups:
             followups = _graph_followups(username, influencer_id, list(candidate.get("seed_niches") or []), source)
         return followups
+    except RateLimitedError as exc:
+        db.mark_candidate(username, "blocked", str(exc))
+        db.mark_job(job_id, "failed", str(exc))
+        logger.warning("Rate limited for @%s: crawlers will stop. %s", username, exc)
+        raise
     except CollectionBlockedError as exc:
         db.mark_candidate(username, "blocked", str(exc))
         db.mark_job(job_id, "failed", str(exc))
@@ -139,6 +144,10 @@ def handle_refresh(message: dict) -> list[dict]:
         db.mark_job(job_id, "completed")
         logger.info("Refreshed @%s (%s)", username, influencer_id)
         return _post_followups(influencer_id, username, post_jobs)
+    except RateLimitedError as exc:
+        db.mark_job(job_id, "failed", str(exc))
+        logger.warning("Rate limited refreshing @%s: crawlers will stop. %s", username, exc)
+        raise
     except CollectionBlockedError as exc:
         db.mark_job(job_id, "failed", str(exc))
         logger.warning("Collection blocked for @%s: %s", username, exc)
@@ -184,6 +193,12 @@ def handle_enrich_post(message: dict) -> list[dict]:
                 candidate.get("source") or "seed",
             )
         return []
+    except RateLimitedError as exc:
+        db.mark_post_details_status(post_id, "blocked")
+        if job_id:
+            db.mark_job(job_id, "failed", str(exc))
+        logger.warning("Rate limited enriching %s: crawlers will stop. %s", post_url, exc)
+        raise
     except CollectionBlockedError as exc:
         db.mark_post_details_status(post_id, "blocked")
         if job_id:
@@ -223,6 +238,11 @@ def handle_discover_graph(message: dict) -> None:
         _discover_more(collector, username, CreatorSnapshot(platform="instagram", username=username), seed_niches, source=source)
         if job_id:
             db.mark_job(job_id, "completed")
+    except RateLimitedError as exc:
+        if job_id:
+            db.mark_job(job_id, "failed", str(exc))
+        logger.warning("Rate limited on graph hop for @%s: crawlers will stop. %s", username, exc)
+        raise
     except Exception as exc:  # noqa: BLE001
         if job_id:
             db.mark_job(job_id, "failed", str(exc))

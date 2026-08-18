@@ -9,6 +9,10 @@ class CollectionBlockedError(RuntimeError):
     """Raised when a public page is gated, rate-limited, or otherwise unavailable."""
 
 
+class RateLimitedError(CollectionBlockedError):
+    """HTTP 429. The crawler fleet must stop fetching until this is cleared."""
+
+
 @dataclass
 class PostSnapshot:
     platform_post_id: str | None = None

@@ -32,6 +32,7 @@ def wait_for_schema(retries: int = 40) -> None:
             with connection() as conn:
                 with conn.cursor() as cur:
                     cur.execute("SELECT followers, category FROM influencer_catalog LIMIT 1")
+                    cur.execute("SELECT paused FROM crawler_control WHERE id = 1")
             return
         except Exception as exc:  # noqa: BLE001
             last = exc
@@ -64,6 +65,38 @@ def qualified_count() -> int:
 
 def below_target() -> bool:
     return qualified_count() < TARGET_QUALIFIED
+
+
+def crawler_is_paused() -> bool:
+    with connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT paused FROM crawler_control WHERE id = 1")
+            row = cur.fetchone()
+            return bool(row and row[0])
+
+
+def crawler_pause_reason() -> str | None:
+    with connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT reason FROM crawler_control WHERE id = 1")
+            row = cur.fetchone()
+            return str(row[0]) if row and row[0] else None
+
+
+def pause_crawler(reason: str) -> None:
+    with connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                """
+                UPDATE crawler_control
+                SET paused = TRUE,
+                    reason = %s,
+                    paused_at = COALESCE(paused_at, NOW()),
+                    updated_at = NOW()
+                WHERE id = 1
+                """,
+                (reason[:500],),
+            )
 
 
 def retry_seed_candidates() -> None:

@@ -5,7 +5,7 @@ import time
 from typing import Any
 from urllib.parse import parse_qs, unquote, urlparse
 
-from app.collectors.base import CollectionBlockedError, Collector, CreatorSnapshot, PostSnapshot
+from app.collectors.base import CollectionBlockedError, Collector, CreatorSnapshot, PostSnapshot, RateLimitedError
 from app.collectors.instagram.parser import (
     _bio_from_visible,
     apply_visible_text,
@@ -35,6 +35,13 @@ _STAT_TITLE_RE = re.compile(r"^\d[\d,]*$")
 _POST_HREF_RE = re.compile(r"/(p|reel|reels)/([A-Za-z0-9_-]+)", re.I)
 
 
+def _raise_for_http_status(status: int, what: str) -> None:
+    if status == 429:
+        raise RateLimitedError(f"{what} returned HTTP 429")
+    if status in {401, 403, 404, 503}:
+        raise CollectionBlockedError(f"{what} returned HTTP {status}")
+
+
 class InstagramPublicCollector(Collector):
     """Collects only publicly available profile metadata.
 
@@ -54,8 +61,7 @@ class InstagramPublicCollector(Collector):
             try:
                 response = page.goto(url, wait_until="domcontentloaded", timeout=PLAYWRIGHT_TIMEOUT_MS)
                 status = response.status if response else 0
-                if status in {401, 403, 404, 429, 503}:
-                    raise CollectionBlockedError(f"Public profile returned HTTP {status}")
+                _raise_for_http_status(status, "Public profile")
                 self._dismiss_public_overlays(page)
                 self._wait_for_profile_header(page)
                 self._dismiss_public_overlays(page)
@@ -128,8 +134,7 @@ class InstagramPublicCollector(Collector):
             try:
                 response = page.goto(post_url, wait_until="domcontentloaded", timeout=PLAYWRIGHT_TIMEOUT_MS)
                 status = response.status if response else 0
-                if status in {401, 403, 404, 429, 503}:
-                    raise CollectionBlockedError(f"Public post returned HTTP {status}")
+                _raise_for_http_status(status, "Public post")
                 self._dismiss_public_overlays(page)
                 try:
                     page.locator("h1, article, [role='dialog']").first.wait_for(timeout=8000)
@@ -326,7 +331,9 @@ class InstagramPublicCollector(Collector):
         try:
             response = page.goto(url, wait_until="domcontentloaded", timeout=PLAYWRIGHT_TIMEOUT_MS)
             status = response.status if response else 0
-            if status in {401, 403, 404, 429, 503}:
+            if status == 429:
+                raise RateLimitedError(f"Public {kind} page for @{username} returned HTTP 429")
+            if status in {401, 403, 404, 503}:
                 logger.info("Public %s page for @%s returned HTTP %s; skip hop", kind, username, status)
                 return []
             html = page.content()
@@ -341,6 +348,8 @@ class InstagramPublicCollector(Collector):
             handles = extract_graph_usernames(html, username)
             logger.info("Public %s hop for @%s found %s handles", kind, username, len(handles))
             return handles
+        except RateLimitedError:
+            raise
         except Exception as exc:  # noqa: BLE001
             logger.info("Public %s hop for @%s failed: %s", kind, username, exc)
             return []

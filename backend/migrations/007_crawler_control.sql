@@ -1,0 +1,10 @@
+CREATE TABLE IF NOT EXISTS crawler_control (
+  id SMALLINT PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+  paused BOOLEAN NOT NULL DEFAULT FALSE,
+  reason TEXT,
+  paused_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+INSERT INTO crawler_control (id) VALUES (1)
+ON CONFLICT (id) DO NOTHING;

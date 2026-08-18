@@ -26,6 +26,9 @@ def bootstrap_candidates(reset_inflight: bool = True) -> int:
 
 
 def enqueue_pending(channel, limit: int | None = None) -> int:
+    if db.crawler_is_paused():
+        logger.warning("Skip enqueue; crawler is paused after a rate limit")
+        return 0
     if not db.below_target():
         logger.info("Qualified catalog already at target %s", TARGET_QUALIFIED)
         return 0
@@ -58,6 +61,9 @@ def enqueue_pending(channel, limit: int | None = None) -> int:
 
 
 def enqueue_pending_posts(channel, limit: int | None = None) -> int:
+    if db.crawler_is_paused():
+        logger.warning("Skip post enqueue; crawler is paused after a rate limit")
+        return 0
     pending = db.pending_post_enrichment(limit or MAX_POST_ENRICH_BATCH)
     queued = 0
     for post in pending:
