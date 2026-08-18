@@ -6,7 +6,6 @@ import { getInfluencer } from "@/features/influencers/influencer.api";
 import { MetricValue } from "@/components/ui/MetricValue";
 import { formatNumber, formatPercent } from "@/utils/format";
 import { NicheChips, initialsAvatar } from "@/components/ui/NicheChips";
-import { Button } from "@/components/ui/Button";
 
 export function InfluencerProfileDrawer({
   influencerId,
@@ -210,9 +209,12 @@ export function InfluencerProfileDrawer({
         </div>
 
         <div className="p-4 border-t border-gray-100 dark:border-neutral-800 bg-gray-50 dark:bg-neutral-900">
-          <Button asChild className="w-full bg-gray-900 dark:bg-neutral-100 hover:bg-gray-800 dark:hover:bg-white text-white dark:text-neutral-900">
-            <Link to={`/influencers/${influencerId}`}>View Full Profile</Link>
-          </Button>
+          <Link
+            to={`/influencers/${influencerId}`}
+            className="inline-flex w-full items-center justify-center rounded-md h-9 px-4 py-2 text-sm font-medium bg-gray-900 dark:bg-neutral-100 hover:bg-gray-800 dark:hover:bg-white text-white dark:text-neutral-900"
+          >
+            View Full Profile
+          </Link>
         </div>
       </div>
     </>
