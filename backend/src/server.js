@@ -37,11 +37,15 @@ async function start() {
   await runMigrations();
   await seedIfNeeded();
 
-  try {
-    await waitForRabbit();
-    await queueSeedDiscovery();
-  } catch (err) {
-    logger.warn(`RabbitMQ unavailable, search still works against PostgreSQL: ${err.message}`);
+  if (env.rabbitmqUrl) {
+    try {
+      await waitForRabbit();
+      await queueSeedDiscovery();
+    } catch (err) {
+      logger.warn(`RabbitMQ unavailable, search still works against PostgreSQL: ${err.message}`);
+    }
+  } else {
+    logger.info("Collection disabled; API will serve the existing catalog");
   }
 
   const app = createApp();

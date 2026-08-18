@@ -25,7 +25,7 @@ export async function getChannel() {
   return channel;
 }
 
-export async function waitForRabbit(retries = 40) {
+export async function waitForRabbit(retries = 5) {
   for (let i = 1; i <= retries; i += 1) {
     try {
       await getChannel();

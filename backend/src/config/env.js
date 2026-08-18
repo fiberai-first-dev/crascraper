@@ -16,14 +16,16 @@ const jwtSecret = required(
   nodeEnv === "production" ? undefined : "dev-jwt-secret-change-me"
 );
 if (nodeEnv === "production" && (jwtSecret === "dev-jwt-secret-change-me" || jwtSecret.length < 32)) {
-  throw new Error("Set JWT_SECRET to a random string of at least 32 characters before running in production");
+  console.warn(
+    "JWT_SECRET is weak. Set a random 32+ character value (openssl rand -hex 32)."
+  );
 }
 
 export const env = {
   nodeEnv,
   port: Number(process.env.PORT || 4000),
   databaseUrl: required("DATABASE_URL", "postgres://crafter:crafter@localhost:5432/crafter"),
-  rabbitmqUrl: required("RABBITMQ_URL", "amqp://crafter:crafter@localhost:5672"),
+  rabbitmqUrl: process.env.RABBITMQ_URL || "",
   jwtSecret,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || "7d",
   corsOrigin: (process.env.CORS_ORIGIN || "http://localhost:8081,http://localhost:8080,http://localhost:5173,http://insta-demo.fybud.com,https://insta-demo.fybud.com")

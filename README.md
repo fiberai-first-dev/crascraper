@@ -11,8 +11,10 @@ Influencer discovery and campaign workspace for agencies. Search a local catalog
 
 ```bash
 cp .env.example .env
-docker compose up --build -d --scale crawler=2
+docker compose up --build -d
 ```
+
+RabbitMQ and crawlers stay off unless you pass `--profile collect`.
 
 - App (same-origin `/api`): http://localhost:8081
 - Frontend only: http://localhost:8080
@@ -44,10 +46,17 @@ Compose publishes apps on loopback so **host nginx** (already installed) is the 
 
 1. Copy `.env.example` to `.env`. Set `JWT_SECRET` to a random value (`openssl rand -hex 32`). Compose will refuse to start without it.
 2. Optional: `VITE_API_BASE_URL=https://api.insta-demo.fybud.com` if the SPA should call the API host directly. Leave it empty to use same-origin `/api` on the frontend domain (host nginx proxies that path). Rebuild the frontend after changing this value.
-3. Start the stack:
+3. Start the stack (no crawlers, no RabbitMQ):
 
 ```bash
-docker compose up --build -d --scale crawler=2
+docker compose up --build -d --remove-orphans
+```
+
+To restore a catalog dump:
+
+```bash
+chmod +x scripts/restore-catalog.sh
+./scripts/restore-catalog.sh crascraper.sql
 ```
 
 4. Install the host nginx site (Debian/Ubuntu). Recopy this file after pulling nginx changes:
