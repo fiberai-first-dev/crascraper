@@ -27,24 +27,3 @@ coverage/
 .cache/
 frontend/node_modules/
 backend/node_modules/
-
-
-# Python
-__pycache__/
-*.py[cod]
-.venv/
-venv/
-.pytest_cache/
-.mypy_cache/
-playwright-cache/
-
-# IDE
-.idea/
-.vscode/
-*.swp
-
-# Coverage / caches
-coverage/
-.cache/
-frontend/node_modules/
-backend/node_modules/

@@ -17,7 +17,7 @@ export const env = {
   rabbitmqUrl: required("RABBITMQ_URL", "amqp://crafter:crafter@localhost:5672"),
   jwtSecret: required("JWT_SECRET", "dev-jwt-secret-change-me"),
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || "7d",
-  corsOrigin: (process.env.CORS_ORIGIN || "http://localhost:5173,http://localhost:8080")
+  corsOrigin: (process.env.CORS_ORIGIN || "http://localhost:8081,http://localhost:8080,http://localhost:5173,http://insta-demo.fybud.com,https://insta-demo.fybud.com")
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean),

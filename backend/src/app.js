@@ -11,6 +11,7 @@ import * as authController from "./controllers/auth.controller.js";
 
 export function createApp() {
   const app = express();
+  app.set("trust proxy", 1);
   app.use(
     cors({
       origin: env.corsOrigin,
