@@ -1,7 +1,18 @@
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "3"
+
 services:
   postgres:
     image: postgres:16-alpine
     restart: unless-stopped
+    init: true
+    logging: *default-logging
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-crafter}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-crafter}
@@ -19,6 +30,11 @@ services:
   rabbitmq:
     image: rabbitmq:3.13-management-alpine
     restart: unless-stopped
+    init: true
+    logging: *default-logging
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 400m
     environment:
       RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-crafter}
       RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-crafter}
@@ -38,6 +54,12 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     restart: unless-stopped
+    init: true
+    logging: *default-logging
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 512m
+    stop_grace_period: 15s
     env_file:
       - path: ./backend/.env
         required: false
@@ -46,7 +68,7 @@ services:
       PORT: 4000
       DATABASE_URL: postgres://${POSTGRES_USER:-crafter}:${POSTGRES_PASSWORD:-crafter}@postgres:5432/${POSTGRES_DB:-crafter}
       RABBITMQ_URL: amqp://${RABBITMQ_USER:-crafter}:${RABBITMQ_PASSWORD:-crafter}@rabbitmq:5672
-      JWT_SECRET: ${JWT_SECRET:-dev-jwt-secret-change-me}
+      JWT_SECRET: ${JWT_SECRET:?Set JWT_SECRET in .env to a random 32+ character string}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:8081,http://localhost:8080,http://localhost:5173,http://insta-demo.fybud.com,https://insta-demo.fybud.com}
       TARGET_QUALIFIED: ${TARGET_QUALIFIED:-100}
     ports:
@@ -74,6 +96,11 @@ services:
       context: ./crawler
       dockerfile: Dockerfile
     restart: unless-stopped
+    init: true
+    logging: *default-logging
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 2g
     env_file:
       - path: ./crawler/.env
         required: false
@@ -105,6 +132,11 @@ services:
       args:
         VITE_API_BASE_URL: ${VITE_API_BASE_URL:-}
     restart: unless-stopped
+    init: true
+    logging: *default-logging
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 64m
     ports:
       - "${BIND:-127.0.0.1}:${FRONTEND_PORT:-8080}:80"
     healthcheck:
@@ -121,6 +153,11 @@ services:
   nginx:
     image: nginx:1.27-alpine
     restart: unless-stopped
+    init: true
+    logging: *default-logging
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 64m
     ports:
       - "${BIND:-127.0.0.1}:${EDGE_PORT:-8081}:80"
     volumes:

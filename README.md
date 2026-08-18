@@ -42,7 +42,7 @@ Compose publishes apps on loopback so **host nginx** (already installed) is the 
 | `127.0.0.1:8080` | frontend |
 | `127.0.0.1:4001` | backend |
 
-1. Copy `.env.example` to `.env` and set a strong `JWT_SECRET`.
+1. Copy `.env.example` to `.env`. Set `JWT_SECRET` to a random value (`openssl rand -hex 32`). Compose will refuse to start without it.
 2. Optional: `VITE_API_BASE_URL=https://api.insta-demo.fybud.com` if the SPA should call the API host directly. Leave it empty to use same-origin `/api` on the frontend domain (host nginx proxies that path). Rebuild the frontend after changing this value.
 3. Start the stack:
 
@@ -50,7 +50,7 @@ Compose publishes apps on loopback so **host nginx** (already installed) is the 
 docker compose up --build -d --scale crawler=2
 ```
 
-4. Install the host nginx site (Debian/Ubuntu):
+4. Install the host nginx site (Debian/Ubuntu). Recopy this file after pulling nginx changes:
 
 ```bash
 sudo cp infrastructure/nginx/prod.conf /etc/nginx/sites-available/crascraper

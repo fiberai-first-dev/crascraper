@@ -46,9 +46,17 @@ async function start() {
 
   const app = createApp();
   const server = http.createServer(app);
-  server.listen(env.port, () => {
+  server.listen(env.port, "0.0.0.0", () => {
     logger.info(`API listening on :${env.port}`);
   });
+
+  const shutdown = (signal) => {
+    logger.info(`${signal} received, shutting down`);
+    server.close(() => process.exit(0));
+    setTimeout(() => process.exit(1), 10000).unref();
+  };
+  process.on("SIGTERM", () => shutdown("SIGTERM"));
+  process.on("SIGINT", () => shutdown("SIGINT"));
 }
 
 start().catch((err) => {

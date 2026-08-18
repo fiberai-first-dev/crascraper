@@ -9,6 +9,9 @@ COPY migrations ./migrations
 COPY seeds ./seeds
 COPY src ./src
 
+RUN chown -R node:node /app
+USER node
+
 ENV NODE_ENV=production
 EXPOSE 4000
 
